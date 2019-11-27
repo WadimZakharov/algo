@@ -16,8 +16,12 @@
 class Stack_v {
 public:
     ~Stack_v();
+    Stack_v(){};
+    Stack_v(const Stack_v&) = delete;
+    Stack_v(Stack_v&&) = delete;
     Stack_v& operator=(const Stack_v&) = delete;
     Stack_v& operator=(Stack_v&&) = delete;
+
     // Проверка стека на пустоту
     bool empty() const;
     // Добавление элемента
