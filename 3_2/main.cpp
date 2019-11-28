@@ -4,32 +4,34 @@
  */
 #include <vector>
 #include <iostream>
+template<typename T, typename Compare = std::less<T>()>
 class Heap {
 public:
-	Heap();
-	void push(int value);
-	int pop_min();
-	int get_min() const;
+	explicit Heap(Compare comp = Compare()) : comp{ comp }{}
+
+	void push(T value);
+	T pop_min();
 	int size() const;
 	bool empty() const;
-	void make_heap(std::vector<int>);
+	void make_heap(std::vector<T>);
+	Heap(const Heap&) = delete;
+	Heap(Heap&&) = delete;
+	Heap& operator=(const Heap&) = delete;
+	Heap& operator=(Heap&&) = delete;
 	~Heap();
 private:
-	std::vector<int> heap;
+	std::vector<T> heap = {};
 	void swap(int i, int j);
 	void siftDown(int i);
 	void siftUp(int i);
 	static int parent(int i);
 	static int child(int i, int side);
+	Compare comp;
 };
 
-Heap::Heap()
-{
-	heap = {};
-}
 
-
-void Heap::make_heap(std::vector<int> v) {
+template<typename T, typename Compare>
+void Heap<T, Compare>::make_heap(std::vector<T> v) {
 	heap = v;
 	for (int i = parent(size() - 1); i >= 0; --i)
 	{
@@ -37,28 +39,22 @@ void Heap::make_heap(std::vector<int> v) {
 	}
 }
 
-bool Heap::empty() const
+template<typename T, typename Compare>
+bool Heap<T, Compare>::empty() const
 {
 	return heap.size() == 0;
 }
-void Heap::push(int value) {
+
+template<typename T, typename Compare>
+void Heap<T, Compare>::push(T value) {
 	heap.push_back(value);
 	siftUp(heap.size() - 1);
 }
 
-int Heap::get_min() const {
-	if (empty()) {
-		return 1000000001;//нужно для работы программы решения задачи
-	}
-	return heap[0];
-}
-
-int Heap::pop_min() {
-	if (empty()) {
-		return 1000000001;
-	}
-	int res = heap[0];
-	int new_head = heap[heap.size() - 1];
+template<typename T, typename Compare>
+T Heap<T, Compare>::pop_min() {
+	T res = heap[0];
+	T new_head = heap[heap.size() - 1];
 	heap.pop_back();
 	if (!empty()) {
 		heap[0] = new_head;
@@ -67,15 +63,15 @@ int Heap::pop_min() {
 	return res;
 }
 
-
-void Heap::siftDown(int i) {
+template<typename T, typename Compare>
+void Heap<T, Compare>::siftDown(int i) {
 	int left = child(i, 1);
 	int right = child(i, 2);
 	int new_min = i;
-	if (left < heap.size() && heap[left] < heap[new_min]) {
+	if (left < heap.size() && comp(heap[left], heap[new_min])) {
 		new_min = left;
 	}
-	if (right < heap.size() && heap[right] < heap[new_min]) {
+	if (right < heap.size() && comp(heap[right], heap[new_min])) {
 		new_min = right;
 	}
 	if (new_min != i) {
@@ -84,73 +80,72 @@ void Heap::siftDown(int i) {
 	}
 }
 
-
-void Heap::siftUp(int i) {
-	while (heap[i] < heap[parent(i)] && i > 0) {
+template<typename T, typename Compare>
+void Heap<T, Compare>::siftUp(int i) {
+	while (comp(heap[i], heap[parent(i)]) && i > 0) {
 		swap(i, parent(i));
 		i = parent(i);
 	}
 }
 
-void Heap::swap(int i, int j) {
-	int tmp = heap[i];
+template<typename T, typename Compare>
+void Heap<T, Compare>::swap(int i, int j) {
+	T tmp = heap[i];
 	heap[i] = heap[j];
 	heap[j] = tmp;
 }
-int Heap::parent(int i) {
+
+template<typename T, typename Compare>
+int Heap<T, Compare>::parent(int i) {
 	int par = (i - 1) / 2;
 	return par;
 }
-int Heap::child(int i, int side) {
+
+template<typename T, typename Compare>
+int Heap<T, Compare>::child(int i, int side) {
 	//side = 1 для левового потомка, side = 2 для правого
 	int ch = 2 * i + side;
 	return ch;
 }
 
-int Heap::size() const {
+template<typename T, typename Compare>
+int Heap<T, Compare>::size() const {
 	return heap.size();
 }
 
-Heap::~Heap() {
+template<typename T, typename Compare>
+Heap<T, Compare>::~Heap() {
 	heap.clear();
 }
 
-int max(int a, int b) {
-	if (a > b)
-		return a;
-	else
-		return b;
-}
-std::vector<int> merge(std::vector<int> &v1, std::vector<int> &v2) {
+template<typename T, typename Compare = std::less<>>
+std::vector<T> merge(std::vector<T> &v1, std::vector<T> &v2) {
 	int i = 0;
 	int j = 0;
-	std::vector<int> mearge_v = {};
+	Compare comp = Compare();
+	std::vector<T> mearge_v(v1.size() + v2.size());
 
 	for (int k = 0; k < v1.size() + v2.size(); k++) {
-		if (v1[i] < v2[j])
+		if (comp(v1[i], v2[j]))
 		{
-			mearge_v.push_back(v1[i]);
+			mearge_v[k] = v1[i];
 			i++;
 		}
 		else
 		{
-			mearge_v.push_back(v2[j]);
+			mearge_v[k] = v2[j];
 			j++;
 		}
 
-		if (i == v1.size()) {
-			for (j = j; j < v2.size(); j++)
-			{
-				mearge_v.push_back(v2[j]);
-			}
+		if (i == v1.size()) 
+		{
+			mearge_v.insert(mearge_v.begin() + (i + j), v2.begin()+j, v2.end());
 			return mearge_v;
 		}
 
-		if (j == v2.size()) {
-			for (i = i; i < v1.size(); i++)
-			{
-				mearge_v.push_back(v1[i]);
-			}
+		if (j == v2.size()) 
+		{
+			mearge_v.insert(mearge_v.begin() + (i + j), v1.begin()+i, v1.end());
 			return mearge_v;
 		}
 
@@ -158,17 +153,18 @@ std::vector<int> merge(std::vector<int> &v1, std::vector<int> &v2) {
 	return mearge_v;
 }
 
-std::vector<int> HeapSort_k(std::vector<int> &vec, int k) {
+template<typename T, typename Compare = std::less<>>
+std::vector<T> HeapSort_k(std::vector<T> &vec, int k) {
 	/*
 	 Принимает на вход почти упорядоченную последовательность и шаг k(из задания)
 	 Сортировка каждого среза длины k из последовательности производится методом HeapSort.
 	 Возвращает отсортированную последовательность.
 	 */
 	int i = 0;
-	Heap heap;
+	Heap<T, std::less<T>> heap;
 	for (i = 0; i < k*(vec.size() / k); i = i + k)
 	{
-		heap.make_heap(std::vector<int>(vec.begin() + i, vec.begin() + (i + k)));
+		heap.make_heap(std::vector<T>(vec.begin() + i, vec.begin() + (i + k)));
 		for (int j = i; j < i + k; j++)
 		{
 			vec[j] = heap.pop_min();
@@ -176,25 +172,25 @@ std::vector<int> HeapSort_k(std::vector<int> &vec, int k) {
 
 	}
 
-	heap.make_heap(std::vector<int>(vec.begin() + i, vec.end()));
+	heap.make_heap(std::vector<T>(vec.begin() + i, vec.end()));
 	for (int j = i; j < vec.size(); j++)
 	{
 		vec[j] = heap.pop_min();
 	}
 
 	for (i = 0; i < k*(vec.size() / k) - k; i = i + k) {
-		std::vector<int> slice1 = std::vector<int>(vec.begin() + i, vec.begin() + (i + k));
-		std::vector<int> slice2 = std::vector<int>(vec.begin() + (i + k), vec.begin() + (i + 2 * k));
-		std::vector<int> meagre_vec = merge(slice1, slice2);
+		std::vector<T> slice1 = std::vector<T>(vec.begin() + i, vec.begin() + (i + k));
+		std::vector<T> slice2 = std::vector<T>(vec.begin() + (i + k), vec.begin() + (i + 2 * k));
+		std::vector<T> meagre_vec = merge(slice1, slice2);
 		for (int j = 0; j < 2 * k; j++) {
 			vec[i + j] = meagre_vec[j];
 		}
 	}
 
 	if (i != vec.size() - k) {
-		std::vector<int> slice1 = std::vector<int>(vec.begin() + i, vec.begin() + (i + k));
-		std::vector<int> slice2 = std::vector<int>(vec.begin() + (i + k), vec.end());
-		std::vector<int> meagre_vec = merge(slice1, slice2);
+		std::vector<T> slice1 = std::vector<T>(vec.begin() + i, vec.begin() + (i + k));
+		std::vector<T> slice2 = std::vector<T>(vec.begin() + (i + k), vec.end());
+		std::vector<T> meagre_vec = merge(slice1, slice2);
 		for (int j = 0; j < vec.size() - i; j++) {
 			vec[i + j] = meagre_vec[j];
 		}
