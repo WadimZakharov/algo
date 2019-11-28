@@ -10,23 +10,29 @@
 #include <stack>
 #include <queue>
 using namespace std;
-struct TreeNode
-{
-    explicit TreeNode(int _value) : value(_value) {}
-    int value = 0;
-    TreeNode* left = nullptr;
-    TreeNode* right = nullptr;
-};
 
 class Tree
 {
 public:
     ~Tree();
-    void Print() const;
+    Tree(){};
+    Tree(const Tree&) = delete;
+    Tree(Tree&&) = delete;
+    Tree& operator=(const Tree&) = delete;
+    Tree& operator=(Tree&&) = delete;
+    queue<int> get_post_order() const;
     void AddNode(int value);
 private:
+    struct TreeNode
+    {
+        explicit TreeNode(int _value) : value(_value) {}
+        int value = 0;
+        TreeNode* left = nullptr;
+        TreeNode* right = nullptr;
+    };
+
     TreeNode *root = nullptr;
-    void postorder(TreeNode *node) const;
+    queue<int> postorder(TreeNode *node) const;
 };
 
 
@@ -50,6 +56,8 @@ Tree::~Tree()
         }
     }
 }
+
+
 void Tree::AddNode(int value)
 {
     if (!root)
@@ -81,15 +89,16 @@ void Tree::AddNode(int value)
     }
 }
 
-void Tree::Print() const
+queue<int> Tree::get_post_order() const
 {
-    postorder(root);
+    return postorder(root);
 }
 
 
 
-void Tree::postorder(TreeNode *node) const
+queue<int> Tree::postorder(TreeNode *node) const
 {
+    queue<int> que;
     if (node)
     {
         stack<TreeNode*> stack;
@@ -109,28 +118,32 @@ void Tree::postorder(TreeNode *node) const
             }
             else
             {
-                cout << head->value << " ";
+                que.push(head->value);
                 last_node = head;
                 stack.pop();
             }
         }
     }
-
+    return que;
 }
 
 int main()
 {
     int n = 0;
     cin >> n;
-    Tree* tree = new Tree;
+    Tree tree;
     for (int i = 0; i < n; i++)
     {
         int value = 0;
         cin >> value;
-        tree->AddNode(value);
+        tree.AddNode(value);
     }
 
-    tree->Print();
-    delete tree;
+    auto qpost_order_queue = tree.get_post_order();
+    for(int i=0; i<n; i++)
+    {
+        std::cout << qpost_order_queue.front() << " ";
+        qpost_order_queue.pop();
+    }
     return 0;
 }
