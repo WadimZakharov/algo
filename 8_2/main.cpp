@@ -64,7 +64,7 @@ HashTable<T, THash1, THash2>::HashTable(size_t _initial_size,
 template<class T, class THash1, class THash2>
 bool HashTable<T, THash1, THash2>::Has(const T& key) const
 {
-    const size_t hash = Hash(const_cast<T &>(key));
+    const size_t hash = Hash(const_cast<T &>(key))% initial_size;
     if (table[hash] == key)
         return true;
 
@@ -90,7 +90,7 @@ bool HashTable<T, THash1, THash2>::Has(const T& key) const
 
 template<class T, class THash1, class THash2>
 bool HashTable<T, THash1, THash2>::Add(const T& key) {
-    const auto hash = Hash(const_cast<T &> (key));
+    const auto hash = Hash(const_cast<T &> (key))% initial_size;
     if (table[hash] == key)
         return false;
 
@@ -142,7 +142,7 @@ bool HashTable<T, THash1, THash2>::Add(const T& key) {
 template<class T, class THash1, class THash2>
 bool HashTable<T, THash1, THash2>::Remove(const T& key)
 {
-    const size_t hash = Hash(const_cast<T &> (key));
+    const size_t hash = Hash(const_cast<T &> (key))% initial_size;
     if (table[hash] == key)
     {
         table[hash] = del;
@@ -227,7 +227,6 @@ size_t HashString2(const string &str)
     int hash = length*str.size()+1;
     return hash;
 }
-
 
 
 
