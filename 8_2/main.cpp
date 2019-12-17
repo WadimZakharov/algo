@@ -14,71 +14,64 @@
  */
 #include <iostream>
 #include <string>
+#include <functional>
 constexpr auto nullstr = "";
 constexpr auto del = "DELETE_VALUE";
 using namespace std;
+
+
+template<class T, class THash1, class THash2>
 class HashTable {
 public:
-    HashTable(size_t _initial_size);
+    HashTable(size_t _initial_size, THash1 hash1, THash2 hash2);
     ~HashTable();
     HashTable(const HashTable&) = delete;
     HashTable(HashTable&&) = delete;
     HashTable& operator=(const HashTable&) = delete;
     HashTable& operator=(HashTable&&) = delete;
 
-    bool Has(const string& key) const;
-    bool Add(const string& key);
-    bool Remove(const string& key);
+    bool Has(const T& key) const;
+    bool Add(const T& key);
+    bool Remove(const T& key);
 
 private:
     size_t initial_size;
-    string *table;
-    size_t Hash(string str) const;
-    size_t Hash2(string str) const;
+    T *table;
+    THash1 Hash;
+    THash2 Hash2;
     void ResizeTable();
     size_t size;
 };
 
-HashTable::~HashTable()
+template<class T, class THash1, class THash2>
+HashTable<T, THash1, THash2>::~HashTable()
 {
     delete[] table;
 }
 
-HashTable::HashTable(size_t _initial_size)
+template<class T, class THash1, class THash2>
+HashTable<T, THash1, THash2>::HashTable(size_t _initial_size,
+                                        THash1 hash1, THash2 hash2)
 {
     initial_size = _initial_size;
     size = 0;
     table = new string [initial_size];
-}
-
-size_t HashTable::Hash(string str) const
-{
-    int prime_number = 559991;
-    int hash = 0;
-    for (char& c : str)
-    {
-        hash = (hash * prime_number + c)%initial_size;
-    }
-    return hash;
-}
-
-size_t HashTable::Hash2(string str) const
-{
-    int hash = 2*str.size()+1;
-    return hash;
+    Hash = hash1;
+    Hash2 = hash2;
 }
 
 
-bool HashTable::Has(const string& key) const
+template<class T, class THash1, class THash2>
+bool HashTable<T, THash1, THash2>::Has(const T& key) const
 {
-    const size_t hash = Hash(key);
+    const size_t hash = Hash(const_cast<T &>(key));
     if (table[hash] == key)
         return true;
 
     if (table[hash] == nullstr)
         return false;
 
-    const size_t hash2 = Hash2(key);
+    const size_t hash2 = Hash2(const_cast<T &> (key));
     for (size_t i = 1; i < initial_size; i++)
     {
         size_t hash_i = (hash + i * hash2) % initial_size;
@@ -94,8 +87,10 @@ bool HashTable::Has(const string& key) const
     return false;
 }
 
-bool HashTable::Add(const string& key) {
-    const size_t hash = Hash(key);
+
+template<class T, class THash1, class THash2>
+bool HashTable<T, THash1, THash2>::Add(const T& key) {
+    const auto hash = Hash(const_cast<T &> (key));
     if (table[hash] == key)
         return false;
 
@@ -108,13 +103,19 @@ bool HashTable::Add(const string& key) {
         return true;
     }
 
-    const size_t hash2 = Hash2(key);
+    const size_t hash2 = Hash2(const_cast<T &> (key));
+    int delete_ind = -1;
     for (size_t i = 1; i < initial_size; i++)
     {
         size_t hash_i = (hash + i * hash2) % initial_size;
+        if (table[hash_i] == del && delete_ind==-1)
+            delete_ind = hash_i;
         if (table[hash_i] == nullstr)
         {
-            table[hash_i] = key;
+            if (delete_ind != -1)
+                table[delete_ind] = key;
+            else
+                table[hash_i] = key;
             size++;
             if (size >= (3./4)*initial_size)
                 ResizeTable();
@@ -125,22 +126,34 @@ bool HashTable::Add(const string& key) {
             return false;
         }
     }
-    return false;
+    if (delete_ind == -1) {
+        return false;
+    }
+    else {
+        table[delete_ind] = key;
+        size++;
+        if (size >= (3./4)*initial_size)
+            ResizeTable();
+        return true;
+    }
 }
 
-bool HashTable::Remove(const string& key)
+
+template<class T, class THash1, class THash2>
+bool HashTable<T, THash1, THash2>::Remove(const T& key)
 {
-    const size_t hash = Hash(key);
+    const size_t hash = Hash(const_cast<T &> (key));
     if (table[hash] == key)
     {
         table[hash] = del;
+        size--;
         return true;
     }
 
     if (table[hash] == nullstr)
         return false;
 
-    const size_t hash2 = Hash2(key);
+    const size_t hash2 = Hash2(const_cast<T &> (key));
     for (size_t i = 1; i < initial_size; i++)
     {
         size_t hash_i = (hash + i * hash2) % initial_size;
@@ -151,20 +164,23 @@ bool HashTable::Remove(const string& key)
         if (table[hash_i] == key)
         {
             table[hash_i] = del;
+            size--;
             return true;
         }
     }
     return false;
 }
 
-void HashTable::ResizeTable()
+
+template<class T, class THash1, class THash2>
+void HashTable<T, THash1, THash2>::ResizeTable()
 {
     size = 0;
     initial_size = initial_size * 2;
-    string *new_table = new string[initial_size];
+    T *new_table = new T[initial_size];
     for(int i= 0; i < initial_size/2; i++)
     {
-        string key = table[i];
+        T key = table[i];
         if (key != nullstr && key != del)
         {
             const size_t hash = Hash(key);
@@ -193,9 +209,32 @@ void HashTable::ResizeTable()
     delete[] table;
     table  = new_table;
 }
+
+template<uint32_t prime_number>
+size_t HashString(const string &str)
+{
+    int hash = 0;
+    for (char c : str)
+    {
+        hash = (hash * prime_number + c);
+    }
+    return hash;
+}
+
+template<uint32_t length>
+size_t HashString2(const string &str)
+{
+    int hash = length*str.size()+1;
+    return hash;
+}
+
+
+
+
 int main()
 {
-    HashTable table(8);
+    HashTable<string, function<uint32_t(const std::string&)>,
+            function<uint32_t(const std::string&)>> table(8, HashString<37>, HashString2<2>);
     char command = ' ';
     std::string value;
     while (std::cin >> command >> value)
