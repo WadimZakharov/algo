@@ -12,6 +12,12 @@ class Graph
 {
 public:
     Graph(size_t N);
+    ~Graph();
+    Graph(const Graph&) = delete;
+    Graph(Graph&&) = delete;
+    Graph& operator=(const Graph&) = delete;
+    Graph& operator=(Graph&&) = delete;
+
     void LoadGraph(int e1, int e2, int weight);
     size_t Prim();
 private:
@@ -23,6 +29,11 @@ Graph::Graph(size_t N)
 {
     size = N;
     Siblings = vector<vector<pair<size_t,size_t>>>(N);
+}
+
+Graph::~Graph()
+{
+    Siblings.clear();
 }
 
 void Graph::LoadGraph(int e1, int e2, int weight)
