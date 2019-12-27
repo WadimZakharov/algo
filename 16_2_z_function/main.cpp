@@ -24,7 +24,7 @@ private:
 	string pattern;
 	int pattern_size;
 	int ZFunctionFromPattern(int i, const string &pattern, int &Left, int &Right) const;
-	int ZFunctionFromText(int i, const string &text, int &Left, int &Right);
+	int ZFunctionFromText(int i, const string &text, int &Left, int &Right) const;
 	vector<int> z_function_pattern;
 };
 
@@ -58,7 +58,7 @@ int KMP::ZFunctionFromPattern(int i, const string &pattern, int &Left, int &Righ
 }
 
 
-int KMP::ZFunctionFromText(int i, const string &text, int &Left, int &Right)
+int KMP::ZFunctionFromText(int i, const string &text, int &Left, int &Right) const
 {
 	int resault = 0;
 	if (i <= Right)
