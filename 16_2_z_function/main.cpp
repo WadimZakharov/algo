@@ -13,9 +13,9 @@ using namespace std;
 
 class KMP {
 public:
-	KMP(string &_pattern);
+	KMP(const string &_pattern);
 	~KMP() {}
-	vector<int> KMPalgoritm(string &text);
+	vector<int> KMPalgoritm(const string &text);
 	KMP(const KMP&) = delete;
 	KMP(KMP&&) = delete;
 	KMP& operator=(const KMP&) = delete;
@@ -29,7 +29,7 @@ private:
 };
 
 
-KMP::KMP(string &_pattern)
+KMP::KMP(const string &_pattern)
 {
     int Left = 0;
     int Right = 0;
@@ -44,46 +44,46 @@ KMP::KMP(string &_pattern)
 
 int KMP::ZFunctionFromPattern(int i, const string &pattern, int &Left, int &Right) const
 {
-	int resault = 0;
+	int result = 0;
 	if (i <= Right)
-		resault = min(Right - i, z_function_pattern[i - Left]);
-	while (i + resault < pattern_size && pattern[resault] == pattern[i + resault])
-		resault++;
-	if (i + resault >= Right)
+		result = min(Right - i, z_function_pattern[i - Left]);
+	while (i + resault < pattern_size && pattern[resault] == pattern[i + result])
+		result++;
+	if (i + result >= Right)
     {
         Left = i;
-        Right = i + resault;
+        Right = i + result;
     }
-	return resault;
+	return result;
 }
 
 
 int KMP::ZFunctionFromText(int i, const string &text, int &Left, int &Right) const
 {
-	int resault = 0;
+	int result = 0;
 	if (i <= Right)
-		resault = min(Right - i, z_function_pattern[i - Left]);
-	while (i + resault < text.size() && resault < pattern_size &&  pattern[resault] == text[i + resault])
-		resault++;
-	if (i + resault >= Right)
+		result = min(Right - i, z_function_pattern[i - Left]);
+	while (i + resault < text.size() && result < pattern_size &&  pattern[resault] == text[i + resault])
+		result++;
+	if (i + result >= Right)
     {
         Left = i;
-        Right = i + resault;
+        Right = i + result;
     }
-	return resault;
+	return result;
 }
 
-vector<int> KMP::KMPalgoritm(string &text)
+vector<int> KMP::KMPalgoritm(const string &text)
 {
 	int Left = -10;
 	int Right = -10;
-	vector<int> resault = {};
+	vector<int> result = {};
 	for (int i = 0; i < text.size(); i++)
 	{
 		if (ZFunctionFromText(i, text, Left, Right) == pattern_size)
-			resault.push_back(i);
+			result.push_back(i);
 	}
-	return resault;
+	return result;
 }
 
 int main() {
@@ -92,8 +92,8 @@ int main() {
 	cin >> pattern;
 	cin >> text;
 	KMP kmp(pattern);
-	auto resault = kmp.KMPalgoritm(text);
-	for (int res : resault)
+	auto result = kmp.KMPalgoritm(text);
+	for (int res : result)
 		cout << res << " ";
 	return 0;
 }
